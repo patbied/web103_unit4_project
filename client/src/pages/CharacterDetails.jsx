@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import tracerImg from '../assets/tracer.png'
 import mercyImg from '../assets/mercy.png'
 import reinhardtImg from '../assets/reinhardt.png'
@@ -8,28 +8,26 @@ import rocket_hammerImg from '../assets/rocket_hammer.png'
 import valkyrie_Img from '../assets/valkyrie.jpg'
 import pulse_bombImg from '../assets/pulse_bomb.png'
 import earthshatterImg from '../assets/eartshatter.jpg'
-const CreateCharacter = () => {
+import { useParams } from 'react-router-dom'
+const CharacterDetails = () => {
+    const {id} = useParams()
     const [character,setCharacter] = useState({ 
         body: 'tracer',
         weapon: 'pulse_pistols',
         ultimate_ability: 'pulse_bomb',
         cost: 600
     })
-    const [error,setError] = useState('')
-    // const checkIfValid = (selected) => {
-    //     console.log("checking",selected)
-    //     if (character.body == 'reinhardt' && selected == 'valkyrie') {
-    //         console.log('return false')
-    //         return false
-    //     } 
-    //     if (character.ultimate_ability == 'valkyrie' && selected == 'reinhardt') {
-    //         console.log('return false')
-    //         return false
-        
+    useEffect(() => {
+        // console.log("id",id)
+        const fetchCharacter = async () => {
+            const response = await fetch(`/api/${id}`)
+            const data = await response.json()
+            console.log(data)
+            setCharacter(data)
+        }
 
-    //     }
-    //     return true
-    // }
+        fetchCharacter()
+    },[id])
     const costs = {
         body: {
             'tracer': 150,
@@ -52,7 +50,7 @@ const CreateCharacter = () => {
         const {name,value} = e.target
         
         // if (checkIfValid(e.target.value)){
-            setError('')
+          
             setCharacter((prev) => {
                 return {
                     ...prev,
@@ -67,27 +65,33 @@ const CreateCharacter = () => {
         
         
     }
-
-    const createCharacter = async(e) => {
+    const updateCharacter = async(e) => {
         e.preventDefault()
         console.log(character)
         const options = {
-            method: 'POST',
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(character)
         }
-        const response = await fetch('/api',options)
+        await fetch(`/api/${character.id}`,options)
+        
+    }
+    const handleDelete = async() => {
+        const options = {
+            method: 'DELETE'  
+        }
+        await fetch(`/api/${character.id}`,options)
+        window.location = '/'
         
     }
   return (
-    <div><h1>Create Character</h1>
-    {error && <h3>Error: {error}</h3>}
-    <form onSubmit={createCharacter}> 
+    <div> 
+    <form onSubmit={updateCharacter}> 
     <h2>Character Body</h2>
 
-    <select name='body' onChange={handleChange}>
+    <select name='body' value={character.body} defaultValue={character.body} onChange={handleChange}>
         <option value="tracer">Tracer - ${costs.body['tracer']}</option>
         <option value="mercy">Mercy - ${costs.body['mercy']}</option>
         <option value="reinhardt" disabled={character.ultimate_ability == 'valkyrie'}>Reinhardt - ${costs.body['reinhardt']}</option>
@@ -98,7 +102,7 @@ const CreateCharacter = () => {
 
 
     <h2>Weapon</h2>
-    <select name='weapon' onChange={handleChange}>
+    <select name='weapon' value={character.weapon} onChange={handleChange}>
         <option value="pulse_pistols">Pulse Pistols - ${costs.weapon['pulse_pistols']}</option>
         <option value="caduceus_blaster">Caduceus Blaster - ${costs.weapon['caduceus_blaster']}</option>
         <option value="rocket_hammer">Rocket Hammer - ${costs.weapon['rocket_hammer']}</option>
@@ -109,7 +113,7 @@ const CreateCharacter = () => {
 
 
     <h2>Ultimate</h2>
-    <select name='ultimate_ability' onChange={handleChange}>
+    <select name='ultimate_ability' value={character.ultimate_ability} onChange={handleChange}>
         <option value="pulse_bomb">Pulse Bomb - ${costs.ultimate_ability['pulse_bomb']}</option>
         <option value="valkyrie" disabled={character.body == 'reinhardt'}>Valkyrie - ${costs.ultimate_ability['valkyrie']}</option>
         <option value="earthshatter">Earthshatter - ${costs.ultimate_ability['earthshatter']}</option>
@@ -120,10 +124,11 @@ const CreateCharacter = () => {
 
 
     <h3>Total cost: ${costs.body[character.body] + costs.weapon[character.weapon] + costs.ultimate_ability[character.ultimate_ability]}</h3>
-    <button type='submit'>Create</button>
+    <button type='submit'>Update</button>
     </form>
+    <button onClick={handleDelete} style={{margin:'10px'}} role="button">Delete</button>
     </div>
   )
 }
 
-export default CreateCharacter
+export default CharacterDetails
